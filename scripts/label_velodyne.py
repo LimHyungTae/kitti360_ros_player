@@ -42,6 +42,7 @@ POSES_DIR = os.path.join(KITTI360_DIR, "data_poses")
 SEARCH_RADIUS = 0.2
 
 SKIP_EXISTING = False
+SAVE_TRANSFORMED_CLOUD = False
 
 
 def main():
@@ -158,14 +159,16 @@ def main():
             ]).T
 
             # add ring values to points
+            if not SAVE_TRANSFORMED_CLOUD:
+                points[:, :3] = points_copy[:, :3]
+
             points = np.append(points, labels, axis=1)
             points = np.core.records.fromarrays(points.T,
                                                 dtype=[('x', 'float32'),
                                                        ('y', 'float32'),
                                                        ('z', 'float32'),
-                                                       ('remission',
-                                                        'float32'),
-                                                       ('ring', 'uint16')])
+                                                       ('intensity', 'float32'),
+                                                       ('label', 'uint32')])
             np.save(outputfilepath, points)
 
 

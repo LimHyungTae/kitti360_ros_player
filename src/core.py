@@ -1441,7 +1441,7 @@ class Kitti360DataPublisher:
         # PointField http://docs.ros.org/en/lunar/api/sensor_msgs/html/msg/PointField.html
         cloud_msg = PointCloud2()
         cloud_msg.header.stamp = self.timestamps_velodyne.iloc[frame]
-        cloud_msg.header.frame_id = "map"
+        cloud_msg.header.frame_id = "kitti360_velodyne"
         cloud_msg.header.seq = frame
 
         # body
@@ -1452,12 +1452,12 @@ class Kitti360DataPublisher:
             PointField("y", 4, PointField.FLOAT32, 1),
             PointField("z", 8, PointField.FLOAT32, 1),
             PointField("intensity", 12, PointField.FLOAT32, 1),
-            PointField("ring", 16, PointField.UINT16, 1)
+            PointField("label", 16, PointField.UINT32, 1)
         ]
         # both True and False worked, so idk
         cloud_msg.is_bigendian = False
-        cloud_msg.point_step = 18  # 4 * 4bytes (float32)
-        cloud_msg.row_step = 18  # a row is a point in our case
+        cloud_msg.point_step = 20 
+        cloud_msg.row_step = 20 
         cloud_msg.data = points.tobytes()
         cloud_msg.is_dense = True
 
