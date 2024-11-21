@@ -44,6 +44,8 @@ SEARCH_RADIUS = 0.2
 SKIP_EXISTING = False
 SAVE_TRANSFORMED_CLOUD = False
 
+BIT_MOVE_16 = 2**16
+BIT_MOVE_8 = 2**8
 
 def main():
     for sequence_dir in os.listdir(RAW_3D_DIR):
@@ -70,6 +72,9 @@ def main():
         current_semantic_kdtree = None
         current_semantic_points = None
         current_semantic_points_IDs = None
+        current_semantic_points_reds = None
+        current_semantic_points_greens = None
+        current_semantic_points_blues = None
 
         # read poses for current sequence
         poses = pd.read_csv(os.path.join(POSES_DIR, sequence_dir, "poses.txt"),
@@ -136,6 +141,14 @@ def main():
                         "semantic"].copy()
                     # if point is not found we call iloc[-1] and then the last line is chosen
                     current_semantic_points_IDs["default"] = 0
+
+                    current_semantic_points_reds = current_semantic_points["red"].copy()
+                    current_semantic_points_reds["default"] = 0
+                    current_semantic_points_greens = current_semantic_points["green"].copy()
+                    current_semantic_points_greens["default"] = 0
+                    current_semantic_points_blues = current_semantic_points["blue"].copy()
+                    current_semantic_points_blues["default"] = 0
+
             else:
                 print(f"skipping {frame=}, no static semantic 3d data")
                 continue
@@ -158,10 +171,33 @@ def main():
                 to_numpy()
             ]).T
 
+            reds = np.array([
+                current_semantic_points_reds.iloc[chosen_semantic_indices].
+                to_numpy().astype(int)
+            ]).T
+
+            np.set_printoptions(threshold=np.inf)
+
+            greens = np.array([
+                current_semantic_points_greens.iloc[chosen_semantic_indices].
+                to_numpy().astype(int)
+            ]).T
+
+            blues = np.array([
+                current_semantic_points_blues.iloc[chosen_semantic_indices].
+                to_numpy().astype(int)
+            ]).T
+
+            rgb = reds * BIT_MOVE_16 + greens * BIT_MOVE_8 + blues
+
             # add ring values to points
             if not SAVE_TRANSFORMED_CLOUD:
                 points[:, :3] = points_copy[:, :3]
+            
+            # np.set_printoptions(threshold=np.inf)
+            # print(np.unique(labels))
 
+            # Type 1
             points = np.append(points, labels, axis=1)
             points = np.core.records.fromarrays(points.T,
                                                 dtype=[('x', 'float32'),
@@ -170,6 +206,19 @@ def main():
                                                        ('intensity', 'float32'),
                                                        ('label', 'uint32')])
             np.save(outputfilepath, points)
+
+            # Type 2
+            # But the below code was weird
+            # points_out = np.append(points[:, :3], rgb, axis=1)
+            # points_out = np.append(points_out, labels, axis=1)
+            # points_out = np.core.records.fromarrays(points_out.T,
+            #                                     dtype=[('x', 'float32'),
+            #                                            ('y', 'float32'),
+            #                                            ('z', 'float32'),
+            #                                            ('rgb', 'uint32'),
+            #                                            ('label', 'uint32')])
+
+            # np.save(outputfilepath, points_out)
 
 
 main()
